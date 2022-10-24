@@ -17,7 +17,8 @@ Simulation folder: the simulation code, including
   -All other files: required in VariousFunctions.R. 
   
   
-  LastFM folder: the data and code about LastFM app user data
+  
+LastFM folder: the data and code about LastFM app user data
   
    -lastfm_asia_edges.csv and lastfm_asia_target.csv: the edge information of LastFM network and the unspecified country labels.
    
