@@ -102,9 +102,9 @@ CASCORE = function(Adj, Covariate, K, alpha = NULL, alphan = 5, itermax = 100, s
 n = 600;
 K1 = 4; 
 
-theta = 0.02 + (0.5-0.02)*(seq(1:n)/n)^2; 
+theta = 0.10 + (0.5-0.10)*(seq(1:n)/n)^2; 
 Theta = diag(theta); # node degree heterogeneity
-P = diag(rep(0.6, K1)) + 0.4*ones(K1);
+P = diag(rep(0.7, K1)) + 0.3*ones(K1);
 
 # Set the labels
 set.seed(2019)
@@ -132,7 +132,7 @@ Q = matrix(runif(p*K2, 0, 1), nrow = p, ncol = K2)
 Q = sweep(Q,2,colSums(Q),`/`) 
 
 set.seed(2022)
-prob1 = 0.8;
+prob1 = 0.7;
 W = matrix(0, nrow = n, ncol = K2); 
 for(jj in 1:n) {
   pp = rep(1/(K2-1), K2); pp[l[jj]] = 0;
