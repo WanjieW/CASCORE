@@ -75,7 +75,8 @@ load("Simulation Results/NewExp2a.Rdata")
 prob = prob1seq;
 colvec = 1:10; pchvec = 1:10;
 plot(prob, errorall[ ,1], type = "b", col = colvec[1], pch = pchvec[1],
-     xlab = "Community vs Covariate Class", ylab = "Error Rate", ylim = c(0, 0.7))
+     xlab = paste("p = ", p, ", Matching Rate ", expression(a), sep = ""), ylab = "Error Rate", ylim = c(0, 0.7), 
+     cex.lab = 1.5)
 for(i in 2:6){
     lines(prob, errorall[, i], type = "b", col = colvec[i], pch = pchvec[i])
 }
@@ -86,7 +87,8 @@ for(i in 2:6){
   prob = prob1seq;
   colvec = 1:10; pchvec = 1:10;
   plot(prob, errorall[ ,1], type = "b", col = colvec[1], pch = pchvec[1],
-       xlab = "Community vs Covariate Class", ylab = "Error Rate", ylim = c(0, 0.7))
+       xlab = paste("p = ", p, ", Matching Rate ", expression(a), sep = ""), ylab = "Error Rate", ylim = c(0, 0.7), 
+       cex.lab = 1.5)
   for(i in 2:6){
     lines(prob, errorall[, i], type = "b", col = colvec[i], pch = pchvec[i])
   }
@@ -100,82 +102,93 @@ dev.off()
 ##################### O(1) Multinomial Covariates ######################
 # Experiment 2. Generate the mu_X for each class by uniform distribution, and
 # then normalize to be with sum 1.
-# See how the mis-classification rate will impact the result
+# See how the network density will impact the result
+
 
 # Consider p = 400
 caseno = 1;
 n = 600;
 repetition = 50;
-K1 = 4; K2 = K1 + 6; prob1seq = seq(0.4, 1, by = 0.05);
+K1 = 4; K2 = K1 + 6; prob1 = 0.7;
+thetaseq = seq(0.01, 0.25, by = 0.01);
 
-errorall = matrix(0, nrow = length(prob1seq), ncol = 7) #store the error rate in each repetition
+errorall = matrix(0, nrow = length(thetaseq), ncol = 7) #store the error rate in each repetition
 colnames(errorall) = c("New", "CASC", "ADMM", "SCORE, giant", "nPCA", "oPCA", "giant/all")
 errsd = errorall;
-for(probjj in 1:length(prob1seq)){
-  prob1 = prob1seq[probjj];
+for(thetajj in 1:length(thetaseq)){
+  thetaa = thetaseq[thetajj];
   Nrange = 50; Nmin = 70;
-  theta = 0.01 + (0.5-0.01)*(seq(1:n)/n)^2; 
+  theta = thetaa + (0.5-thetaa)*(seq(1:n)/n)^2; 
   a = 0.7; 
   source('Simulation.R')
-  print(paste("prob1 = ", prob1));
-  filename = paste('Simulation Results/Exp1a_Prob_', prob1*10, '.Rdata', sep = "");
+  print(paste("thetaa = ", thetaa));
+  filename = paste('Simulation Results/Exp1a_thetaa_', thetaa*10, '.Rdata', sep = "");
   save(D0, errormat, P, Pi, Q, Theta, W, caseno, a, n, p, Nrange, Nmin, l, K1, K2, prob1, repetition, theta, file = filename)
-  errorall[probjj,] = colMeans(errormat); errsd[probjj,] = apply(errormat, 2, sd)
+  errorall[thetajj,] = colMeans(errormat); errsd[thetajj,] = apply(errormat, 2, sd)
 }
 
 
-save(errorall, errsd, K1, K2, n, p, repetition, Theta, P, Pi, prob1seq, Nrange, Nmin, prob1seq,
+save(errorall, errsd, K1, K2, n, p, repetition, P, Pi, thetaseq, prob1, Nrange, Nmin,
      file = "Simulation Results/NewExp1a.Rdata")
 
-
-# Consider p = 800
 caseno = 2;
 n = 600;
 repetition = 50;
+K1 = 4; K2 = K1 + 6; prob1 = 0.7;
+thetaseq = seq(0.01, 0.25, by = 0.01);
 
-K1 = 4; K2 = K1 + 6; prob1seq = seq(0.4, 1, by = 0.05);
-
-errorall = matrix(0, nrow = length(prob1seq), ncol = 7) #store the error rate in each repetition
+errorall = matrix(0, nrow = length(thetaseq), ncol = 7) #store the error rate in each repetition
 colnames(errorall) = c("New", "CASC", "ADMM", "SCORE, giant", "nPCA", "oPCA", "giant/all")
 errsd = errorall;
-for(probjj in 1:length(prob1seq)){
-  prob1 = prob1seq[probjj];
+for(thetajj in 1:length(thetaseq)){
+  thetaa = thetaseq[thetajj];
   Nrange = 50; Nmin = 70;
-  theta = 0.01 + (0.5-0.01)*(seq(1:n)/n)^2; 
+  theta = thetaa + (0.5-thetaa)*(seq(1:n)/n)^2; 
   a = 0.7; 
   source('Simulation.R')
-  print(paste("prob1 = ", prob1));
-  filename = paste('Simulation Results/Exp1b_Prob_', prob1*10, '.Rdata', sep = "");
+  print(paste("thetaa = ", thetaa));
+  filename = paste('Simulation Results/Exp1b_thetaa_', thetaa*10, '.Rdata', sep = "");
   save(D0, errormat, P, Pi, Q, Theta, W, caseno, a, n, p, Nrange, Nmin, l, K1, K2, prob1, repetition, theta, file = filename)
-  errorall[probjj,] = colMeans(errormat); errsd[probjj,] = apply(errormat, 2, sd)
+  errorall[thetajj,] = colMeans(errormat); errsd[thetajj,] = apply(errormat, 2, sd)
 }
 
-
-save(errorall, errsd, K1, K2, n, p, repetition, Theta, P, Pi, prob1seq, Nrange, Nmin, prob1seq,
+save(errorall, errsd, K1, K2, n, p, repetition, P, Pi, thetaseq, prob1, Nrange, Nmin,
      file = "Simulation Results/NewExp1b.Rdata")
+
+
 ####### Plot Section ############
 pdf(file = "Simulation1.pdf", height = 5, width =10)
 par(mfrow = c(1,2))
 colvec = 1:10; pchvec = 1:10;
 
 load("Simulation Results/NewExp1a.Rdata")
-prob = prob1seq;
-plot(prob, errorall[ ,1], type = "b", col = colvec[1], pch = pchvec[1],
-     xlab = "Community vs Covariate Class", ylab = "Error Rate", ylim = c(0, 0.6))
+thetaa = thetaseq;
+plot(thetaa, errorall[ ,1], type = "b", col = colvec[1], pch = pchvec[1], cex = 0.8,
+     xlab = expression("Minimal"~"Theta "*theta), ylab = "Error Rate", 
+     ylim = c(0, 0.6), cex.lab = 1.5)
 for(i in 2:6){
-  lines(prob, errorall[ , i], type = "b", col = colvec[i], pch = pchvec[i])
+  lines(thetaa, errorall[ , i], type = "b", col = colvec[i], pch = pchvec[i], cex = 0.8)
 }
-legend("bottomleft", legend = c("CASCORE", "CASC", "SDP", "SCORE", "nPCA", "oPCA"),
+for(i in 1:6){
+  lines(thetaa, errorall[ , i], col = colvec[i])
+}
+legend("topright", legend = c("CASCORE", "CASC", "SDP", "SCORE", "nPCA", "oPCA"),
        col = 1:6, pch = 1:6, lty = 1, cex = 0.8)
+
 
 load("Simulation Results/NewExp1b.Rdata")
-plot(prob, errorall[ ,1], type = "b", col = colvec[1], pch = pchvec[1],
-     xlab = "Community vs Covariate Class", ylab = "Error Rate", ylim = c(0, 0.6))
+thetaa = thetaseq;
+plot(thetaa, errorall[ ,1], type = "b", col = colvec[1], pch = pchvec[1], cex = 0.8,
+     xlab = expression("Minimal"~"Theta "*theta), ylab = "Error Rate", ylim = c(0, 0.6), 
+     cex.lab = 1.5)
 for(i in 2:6){
-  lines(prob, errorall[ , i], type = "b", col = colvec[i], pch = pchvec[i])
+  lines(thetaa, errorall[ , i], type = "b", col = colvec[i], pch = pchvec[i], cex = 0.8)
 }
-legend("bottomleft", legend = c("CASCORE", "CASC", "SDP", "SCORE", "nPCA", "oPCA"),
+for(i in 1:6){
+  lines(thetaa, errorall[ , i], col = colvec[i])
+}
+legend("topright", legend = c("CASCORE", "CASC", "SDP", "SCORE", "nPCA", "oPCA"),
        col = 1:6, pch = 1:6, lty = 1, cex = 0.8)
-
 dev.off()
+
 
