@@ -8,7 +8,7 @@ n = dim(Aselect)[1]; p = dim(Xselect)[2]
 # Select the regional popular artists##
 dartist = colSums(Xselect);
 prop = dartist/dartist_all;
-prob = 1 - round(min(n/2, 800)/p, 4);
+prob = 1 - round(min(n/2, 600)/p, 4);
 Xselect = Xselect[, prop > quantile(prop, probs = prob, na.rm = TRUE)]
 
 ## Remove the users who like no artists
@@ -93,10 +93,11 @@ est_eig1 = kmeans(eig1n, K)$cluster
 cluster(table(est_eig1, labelselect))$error
 NMI(est_eig1, labelselect)
 
-est_eig2 = kmeans(eig2n, K)$cluster
-cluster(table(est_eig2, labelselect))$error
-NMI(est_eig2, labelselect)
+# est_eig2 = kmeans(eig2n, K)$cluster
+# cluster(table(est_eig2, labelselect))$error
+# NMI(est_eig2, labelselect)
 
 est_eig3 = kmeans(eig3n, K)$cluster
 cluster(table(est_eig3, labelselect))$error
 NMI(est_eig3, labelselect)
+

@@ -35,14 +35,14 @@ label = label + 1
 unique(label)
 table(label)
 
-## delete country 5 and 7
-ind7 = which(label != 7 & label != 5);
-A = A[ind7, ind7]; X = X[ind7,]; label = label[ind7];
+
+## delete country 5 
+ind5 = which(label != 5);
+A = A[ind5, ind5]; X = X[ind5,]; label = label[ind5];
 X = X[, colSums(X) > 0]; 
 
 labelnew = label;
 label[labelnew > 5] = label[labelnew > 5] - 1;
-label[labelnew >= 7] = label[labelnew >= 7] - 1;
 rm(labelnew); 
 
 n = dim(A)[1]; p = dim(X)[2]
@@ -56,8 +56,8 @@ dartist_all = colSums(X);
 ## We only consider the comparable countries
 sizes = summary(as.factor(label))
 
-## The example plot on countries 5, 7, 13
-class_select = names(sizes)[c(5,7,13)]
+## The example plot on countries 5, 8, 14
+class_select = names(sizes)[c(5,8,14)]
 source("Dataplot.R")
 
 # Data Section
@@ -89,11 +89,18 @@ print(result$error)
 print(dim(Xselect))
 result_large = result;
 
+class_select = names(sizes)[c(5, 8, 4, 14)]
+source("DataSubsets.R")
+print(result$NMI)
+print(result$error)
+print(dim(Xselect))
+result_large2 = result;
+
 class_select = names(sizes)[sizes > 1000]
 source("DataSubsets.R")
 print(result$NMI)
 print(result$error)
-print(dim(Xselect))   
+print(dim(Xselect))
 result_giant = result;
 
 rm(Aselect)

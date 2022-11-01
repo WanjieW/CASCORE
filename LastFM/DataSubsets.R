@@ -12,7 +12,7 @@ allcomp <- function(A, X, label, class){
   result = rep(0,4)
   names(result) = c("CASCORE", 
                     "CASC",
-                    "ADMM",
+                    "SDP",
                     "nPCA")
   timeresult = result;
   NMIresult = result;
@@ -22,7 +22,7 @@ allcomp <- function(A, X, label, class){
   
   # CASCORE
   t1 = Sys.time()
-  est_cascore = CASCORE(A1, X1, kk)
+  est_cascore = CASCORE(A1, X1, kk, startn = 50)
   est_cascore[is.na(est_cascore)] = which.max(summary(as.factor(est_cascore)))
   timeresult["CASCORE"] = Sys.time() - t1
   result["CASCORE"] = NMI(est_cascore, label)
@@ -37,13 +37,13 @@ allcomp <- function(A, X, label, class){
   result["CASC"] = NMI(est_casc, label)
   if(kk <= 7) error["CASC"] = cluster(table(est_casc, label))$error;
    
-  # ADMM
+  # SDP
   t1 = Sys.time()
-  est_admm = admm(A1, X1, 0.5, kk, 2, 0.5, 100, 5)
-  timeresult["ADMM"] = Sys.time() - t1
-  est_admm[is.na(est_admm)] = which.max(summary(as.factor(est_admm)))
-  result["ADMM"] = NMI(est_admm, label)
-  if(kk <= 7) error["ADMM"] = cluster(table(est_admm, label))$error;
+  est_sdp = admm(A1, X1, 0.5, kk, 2, 0.5, 100, 5)
+  timeresult["SDP"] = Sys.time() - t1
+  est_sdp[is.na(est_sdp)] = which.max(summary(as.factor(est_sdp)))
+  result["SDP"] = NMI(est_sdp, label)
+  if(kk <= 7) error["SDP"] = cluster(table(est_sdp, label))$error;
 
 
   # # SCORE
@@ -83,7 +83,7 @@ allcomp <- function(A, X, label, class){
       Sizes = dim(A1)[1],
 #      GiantProp = giantp,  
       est = list(cascore = est_cascore, casc = est_casc, 
-                 admm =est_admm, opca = est_opca), 
+                 sdp =est_sdp, npca = est_npca), 
       label = label
     )
   )
@@ -99,7 +99,7 @@ n = dim(Aselect)[1]; p = dim(Xselect)[2]
 # Select the regional popular artists##
 dartist = colSums(Xselect);
 prop = dartist/dartist_all;
-prob = 1 - round(min(n/2, 800)/p, 4);
+prob = 1 - round(min(n/2, 600)/p, 4);
 Xselect = Xselect[, prop > quantile(prop, probs = prob, na.rm = TRUE)]
 
 ## Remove the users who like no artists
