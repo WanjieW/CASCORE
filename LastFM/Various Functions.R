@@ -1,13 +1,11 @@
 library(pracma)
-#require(Rcpp);
-#require(RcppArmadillo);
-#sourceCpp("JCDC.cpp");
 source("projSp.R") # for ADMM
 source("rsc.R") # for ADMM
 source("cl2mat.R") # for ADMM
 source("normalizeSym.R") # for ADMM
 source("ADMM.R") # for ADMM
 library(Matrix)
+
 
 CASCORE = function(Adj, Covariate, K, alpha = NULL, alphan = 5, itermax = 100, startn = 10){
   # Inputs:
@@ -46,8 +44,8 @@ CASCORE = function(Adj, Covariate, K, alpha = NULL, alphan = 5, itermax = 100, s
   d = rowSums(Adj);
   X = Adj %*% Covariate
   
-  diagcomp = cbind(1, median(d)/(d+1));
-  lambda = apply(diagcomp, 1, min)
+  #  lambda = max(log(n), quantile(d, probs = 0.25))/(d + max(log(n), median(d, probs = 0.25)));
+  lambda = log(n)/(d + log(n));
   
   if(is.null(alpha)){
     d.net = sort(abs(eig(Adj)), decreasing = TRUE);
@@ -72,6 +70,7 @@ CASCORE = function(Adj, Covariate, K, alpha = NULL, alphan = 5, itermax = 100, s
       est2[i,] = as.factor(result$cluster);
     }
     est = est2[which.min(prop2), ];
+    print(alpha[which.min(prop2)])
     #    print(prop2)
   }
   else{
@@ -95,7 +94,6 @@ CASCORE = function(Adj, Covariate, K, alpha = NULL, alphan = 5, itermax = 100, s
   estall[ind_reg] = est;
   return(estall)
 }
-
 
 
 
@@ -146,70 +144,6 @@ SCORE = function(Adj, K, itermax = NULL, startn = NULL){
   return(est)
 }
 
-
-
-nPCA = function(Adj, K, tau = NULL, itermax = 100, startn = 10){
-  # Inputs:
-  # 1) Adj: an n by n symmetric adjacency matrix whose diagonals = 0 and positive entries = 1.
-  # 2) K: a positive integer which is no larger than n. This is the predefined number of communities.
-  
-  # Optional Arguments for Kmeans:
-  # 1) itermax: the maximum number of iterations allowed.
-  # 2) nstart: R will try startn different random starting assignments and then select the one with the lowest within cluster variation.
-  
-  # Outputs:
-  # 1) a factor indicating nodes' labels. Items sharing the same label are in the same community.
-  
-  # Remark:
-  # nPCA only works on connected graphs, i.e., no isolated node is allowed.
-  if(!isSymmetric(Adj)) stop("Error! Adj is not symmetric!")
-  if(K > dim(Adj)[1]) stop("Error! More communities than nodes!")
-  if(K %% 1 != 0) stop("Error! K is not an integer!")
-  if(K <= 0) stop("Error! Nonpositive K!")
-  
-  s = rowSums(Adj)
-  if(is.null(tau)) tau = mean(s);
-  s =  (s+tau)^(-1/2)
-  S = diag(s)
-  Z = S %*% Adj %*% S
-  s.eigen = eigen(Z) 
-  H = s.eigen$vectors
-  H = H[, 1:K]
-  #apply kmeans on ratio matrix
-  result = tryCatch({kmeans(H, K, iter.max = itermax, nstart = startn)}, error = function(x)
-  {kmeans(H, K, iter.max = 100, nstart = 99)})
-  
-  est = as.factor(result$cluster)
-  return(est)
-}
-
-oPCA = function(Adj, K, itermax = 100, startn = 10){
-  # Inputs:
-  # 1) Adj: an n by n symmetric adjacency matrix whose diagonals = 0 and positive entries = 1.
-  # 2) K: a positive integer which is no larger than n. This is the predefined number of communities.
-  
-  # Optional Arguments for Kmeans:
-  # 1) itermax: the maximum number of iterations allowed.
-  # 2) nstart: R will try startn different random starting assignments and then select the one with the lowest within cluster variation.
-  
-  # Outputs:
-  # 1) a factor indicating nodes' labels. Items sharing the same label are in the same community.
-  
-  if(!isSymmetric(Adj)) stop("Error! Adj is not symmetric!")
-  if(K > dim(Adj)[1]) stop("Error! More communities than nodes!")
-  if(K %% 1 != 0) stop("Error! K is not an integer!")
-  if(K <= 0) stop("Error! Nonpositive K!")
-  
-  o.eigen = eigen(Adj)
-  O = o.eigen$vectors
-  O = O[, 1:K]
-
-  result = tryCatch({kmeans(O, K, iter.max = itermax, nstart = startn)}, error = function(x)
-  {kmeans(O, K, iter.max = itermax, nstart = startn, algorithm="Lloyd")})
-  
-  est = as.factor(result$cluster)
-  return(est)
-}
 
 CAclustering = function(Adj, Covariate, K, alphan = 5, itermax = 100, startn = 10){
   s = rowSums(Adj)
@@ -309,6 +243,79 @@ admm = function(A, C, lambda, K, alpha, rho, TT, tol, quiet = NULL,
   
   T_term = t - 1
   est = rsc(X, K, 'adj')
+  return(est)
+}
+
+## Network-based: Regularized Spectral Clustering
+Net_based <- function(Adj, K, tau = NULL, itermax = NULL, startn = NULL){
+  if(!isSymmetric(Adj)) stop("Error! Adj is not symmetric!")
+  if(K > dim(Adj)[1]) stop("Error! More communities than nodes!")
+  if(K %% 1 != 0) stop("Error! K is not an integer!")
+  if(K <= 0) stop("Error! Nonpositive K!")
+  
+  if(is.null(tau)) tau = mean(Adj);
+  
+  n <- dim(Adj)[1]
+  A_tau = Adj + tau * matrix(1, n, n)/n
+  s = rowSums(A_tau)
+  s =  s^(-1/2)
+  S = diag(s)
+  Z = S %*% A_tau %*% S
+  #D <- diag(rowSums(A_tau))
+  #L_tau <- (D + tau*J/n)^{-1/2} %*% Adj %*% (D + tau*J/n)^{-1/2}
+  #L <- (D + tau*diag(n))^{-1/2} %*% Adj %*% (D + tau*diag(n))^{-1/2}
+  g.eigen <-  eigen(Z)
+  R = g.eigen$vectors
+  R = R[, 1: K]
+  R <- t(apply(R, 1, function(x) x/sqrt(sum(x^2))))
+  
+  # apply Kmeans to assign nodes into communities
+  if(!is.null(itermax) & !is.null(startn)){
+    result = kmeans(R, K, iter.max = itermax, nstart = startn) #apply kmeans on ratio matrix
+  }
+  if(!is.null(itermax) & is.null(startn)){
+    result = kmeans(R, K, iter.max = itermax, nstart = 10) #apply kmeans on ratio matrix
+  }
+  if(is.null(itermax) & !is.null(startn)){
+    result = kmeans(R, K, iter.max = 100, nstart = startn) #apply kmeans on ratio matrix
+  }
+  else{
+    result = kmeans(R, K, iter.max = 100, nstart = 10) #apply kmeans on ratio matrix
+  }
+  
+  est = as.factor(result$cluster)
+  return(est)
+}
+
+## Covariate-based
+# find top K eigen-vectors of X*X^T (an n by n matrix), 
+# and apply K-means on the n by K eigen-vector matrix
+
+Cov_based <- function(Covariate, K, itermax = NULL, startn = NULL){
+  if(K > dim(Covariate)[1]) stop("Error! More communities than nodes!")
+  if(K %% 1 != 0) stop("Error! K is not an integer!")
+  if(K <= 0) stop("Error! Nonpositive K!")
+  
+  # matrix preparation
+  New_X <- Covariate %*% t(Covariate)
+  g.eigen = eigen(New_X)
+  R = g.eigen$vectors
+  R = R[, 1: K]
+  # apply Kmeans to assign nodes into communities
+  if(!is.null(itermax) & !is.null(startn)){
+    result = kmeans(R, K, iter.max = itermax, nstart = startn) #apply kmeans on ratio matrix
+  }
+  if(!is.null(itermax) & is.null(startn)){
+    result = kmeans(R, K, iter.max = itermax, nstart = 10) #apply kmeans on ratio matrix
+  }
+  if(is.null(itermax) & !is.null(startn)){
+    result = kmeans(R, K, iter.max = 100, nstart = startn) #apply kmeans on ratio matrix
+  }
+  else{
+    result = kmeans(R, K, iter.max = 100, nstart = 10) #apply kmeans on ratio matrix
+  }
+  
+  est = as.factor(result$cluster)
   return(est)
 }
 
