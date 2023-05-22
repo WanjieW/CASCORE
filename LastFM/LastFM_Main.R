@@ -36,7 +36,7 @@ unique(label)
 table(label)
 
 
-## delete country 5 
+## delete country with 17 users only
 ind5 = which(label != 5);
 A = A[ind5, ind5]; X = X[ind5,]; label = label[ind5];
 X = X[, colSums(X) > 0]; 
@@ -56,11 +56,7 @@ dartist_all = colSums(X);
 ## We only consider the comparable countries
 sizes = summary(as.factor(label))
 
-## The example plot on countries 5, 8, 14
-class_select = names(sizes)[c(5,8,14)]
-source("Dataplot.R")
-
-# Data Section
+# Curret Degrees
 d = rowSums(A);
 k = length(unique(label))
 dave = rep(0, k)
@@ -68,42 +64,43 @@ for(i in 1:length(unique(label))){
   dave[i] = mean(d[label == i])
 }
 
+
 class_select = names(sizes)[sizes < 100 & sizes > 50]
 source("DataSubsets.R")
+#print(result$NMI)
 print(result$error)
-print(result$NMI)
 print(dim(Xselect))
 result_small = result; 
 
 class_select = names(sizes)[sizes < 300 & sizes > 100]
 source("DataSubsets.R")
-print(result$NMI)
+#print(result$NMI)
 print(result$error)
 print(dim(Xselect))
 result_medium = result; 
 
 class_select = names(sizes)[sizes > 300 & sizes < 1000]
 source("DataSubsets.R")
-print(result$NMI)
+#print(result$NMI)
 print(result$error)
 print(dim(Xselect))
 result_large = result;
 
-class_select = names(sizes)[c(5, 8, 4, 14)]
-source("DataSubsets.R")
-print(result$NMI)
-print(result$error)
-print(dim(Xselect))
-result_large2 = result;
+# class_select = names(sizes)[c(5, 8, 4, 14)]
+# source("DataSubsets.R")
+# #print(result$NMI)
+# print(result$error)
+# print(dim(Xselect))
+# result_large2 = result;
 
 class_select = names(sizes)[sizes > 1000]
 source("DataSubsets.R")
-print(result$NMI)
+#print(result$NMI)
 print(result$error)
 print(dim(Xselect))
 result_giant = result;
 
-rm(Aselect)
-rm(Xselect)
-rm(edgelist)
-save.image(file = "LastFM_Results.Rdata")
+#rm(Aselect)
+#rm(Xselect)
+#rm(edgelist)
+#save.image(file = "LastFM_Results.Rdata")

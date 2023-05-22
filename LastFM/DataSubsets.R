@@ -1,19 +1,12 @@
 ### run algorithm on the countries and compare ###
 allcomp <- function(A, X, label, class){
   A1 = A; X1 = X;
-  # ix = components(graph.adjacency(A1))
-  # componentLabel = ix$membership
-  # 
-  # giantlabel = label[which(componentLabel == which.max(ix$csize))]
-  # Giant = A1[which(componentLabel == which.max(ix$csize)), 
-  #            which(componentLabel == which.max(ix$csize))]
-  # giantp = length(giantlabel) / (dim(A1)[1]) 
   
-  result = rep(0,4)
+  result = rep(0,5)
   names(result) = c("CASCORE", 
                     "CASC",
                     "SDP",
-                    "nPCA")
+                    "Net-Based", "Cov-Based")
   timeresult = result;
   NMIresult = result;
   error = result; 
@@ -22,7 +15,8 @@ allcomp <- function(A, X, label, class){
   
   # CASCORE
   t1 = Sys.time()
-  est_cascore = CASCORE(A1, X1, kk, startn = 50)
+  d = rowSums(A1);
+  est_cascore = CASCORE(A1, X1, kk, alpha = mean(d)/2, startn = 50)
   est_cascore[is.na(est_cascore)] = which.max(summary(as.factor(est_cascore)))
   timeresult["CASCORE"] = Sys.time() - t1
   result["CASCORE"] = NMI(est_cascore, label)
@@ -45,34 +39,20 @@ allcomp <- function(A, X, label, class){
   result["SDP"] = NMI(est_sdp, label)
   if(kk <= 7) error["SDP"] = cluster(table(est_sdp, label))$error;
 
-
-  # # SCORE
-  # t1 = Sys.time()
-  # kkk = length(unique(giantlabel))
-  # est_score = SCORE(Giant, kkk)
-  # est_score[is.na(est_score)] = which.max(summary(as.factor(est_score)))
-  # timeresult["SCORE"] = Sys.time() - t1
-  # comp = table(est_score, giantlabel)
-  # result["SCORE"] = NMI(est_score, giantlabel)
-  # 
-  # if(kkk <= 7) {
-  #   error["SCORE"] = cluster(comp)$error;
-  # }
-  # 
-  # # oPCA
-  # t1 = Sys.time()
-  # est_opca = oPCA(A1, kk)
-  # timeresult["oPCA"] = Sys.time() - t1
-  # result["oPCA"] = NMI(est_opca, label)
-  # if(kk <= 7) error["oPCA"] = cluster(table(est_opca, label))$error;
-
-  # nPCA
+  
+  # Net-Based (RSC)
   t1 = Sys.time()
-  est_npca = nPCA(A1, kk)
-  timeresult["nPCA"] = Sys.time() - t1
-  result["nPCA"] = NMI(est_npca, label)
-  if(kk <= 7) error["nPCA"] = cluster(table(est_npca, label))$error;
-
+  est_rsc = Net_based(A1, kk, startn = 50)
+  timeresult["Net-Based"] = Sys.time() - t1
+  result["Net-Based"] = NMI(est_rsc, label)
+  if(kk <= 7) error["Net-Based"] = cluster(table(est_rsc, label))$error;
+  
+  # Cov-Based (SpectralGem)
+  t1 = Sys.time()
+  est_spec = Cov_based(X1, kk, startn = 50)
+  timeresult["Cov-Based"] = Sys.time() - t1
+  result["Cov-Based"] = NMI(est_spec, label)
+  if(kk <= 7) error["Cov-Based"] = cluster(table(est_spec, label))$error;
   
   return(
     result = list(
@@ -81,9 +61,8 @@ allcomp <- function(A, X, label, class){
       NMI = result,
       time = timeresult,
       Sizes = dim(A1)[1],
-#      GiantProp = giantp,  
       est = list(cascore = est_cascore, casc = est_casc, 
-                 sdp =est_sdp, npca = est_npca), 
+                 sdp =est_sdp, net = est_rsc, cov = est_spec),  
       label = label
     )
   )
@@ -95,6 +74,7 @@ Aselect = A[ind.select, ind.select]; Xselect = X[ind.select,];
 labelselect = label[ind.select];
 
 n = dim(Aselect)[1]; p = dim(Xselect)[2]
+kk = length(unique(labelselect))
 
 # Select the regional popular artists##
 dartist = colSums(Xselect);
@@ -108,6 +88,7 @@ like = which(dnode > 0)
 Xselect = Xselect[like, ]
 Aselect = Aselect[like, like]
 labelselect = labelselect[like]
+dselect = rowSums(Aselect)
 
 n = dim(Aselect)[1]; p = dim(Xselect)[2]
 
