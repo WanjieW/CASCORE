@@ -1,4 +1,4 @@
-setwd("~/Project/Proj-Social Network/New")
+#setwd("~/Project/Proj-Social Network/New")
 library(Matrix)
 
 A = as.matrix(read.table("connection.txt", header=F))
@@ -25,10 +25,11 @@ Aeig = eig(A)
 plot(Aeig[1:6])
 K = 3 #we used to try K  from 3 to 6
 
-source("Various Functions.R")
+source("CASCORE.R")
+d = colSums(A); alpha = mean(d)/2;
 est_cascore = matrix(0, n, nrow = 4, ncol = n); 
 for(K in 3:6){  
-est_cascore[K-2,] = CASCORE(A, X, K, startn = 50)
+est_cascore[K-2,] = CASCORE(A, X, K, alpha = alpha, startn = 50)
 }
 
 #Match the labels for different K
@@ -48,7 +49,9 @@ for(kk in 4:6){
 }
 
 # Plot 4 figures with K = 3:6 (Figure in Supplementary Material)
-pdf(file = "CitationK.pdf", height = 8, width =8)
+#pdf(file = "CitationK.pdf", height = 8, width =8)
+setEPS()  
+postscript("CitationK.eps", height = 8, width =8)  
 par(mfrow = c(2,2), mai = c(0.1, 0.1, 0.2, 0.1))
 for(kk in 3:6){
 plot(graph1, layout = L, vertex.color = est_cascore[kk - 2, newind], vertex.label = NA, 
@@ -66,7 +69,9 @@ for(kk in 1:5){
 }
 
 #Plot
-pdf(file = "Citation.pdf", height = 5, width =7)
+#pdf(file = "Citation.pdf", height = 5, width =7)
+setEPS()  
+postscript("Citation.eps", height = 3, width =6)  
 par(mfrow = c(1,1), mai = c(0.1, 0.1, 0.2, 0.1))
 kk = 5; 
 csize = summary(as.factor(est_cascore[kk-2,]));
@@ -104,9 +109,8 @@ print(giantsize)
 
 print(allsize - giantsize)
 ## Consider an example isolated paper
-set.seed(20)
-sample(which(degree == 0), 2)
-# 2893 2481
+nodes = c(2893, 2481);
+degree[nodes]
 
 paperList[2893, 3]
 #Bayesian pseudo-empirical-likelihood intervals for complex surveys
@@ -116,70 +120,7 @@ legendnames[newlabel[est_cascore[kk-2, 2893]]]
 paperList[2481, 3]
 #Testing dependence among serially correlated multicategory variables
 legendnames[newlabel[est_cascore[kk-2, 2481]]]
-#Large-Scale \n Multiple Testing
+#Large-Scale Multiple Testing
 
 write.table(newlabel[est_cascore[kk-2, ]], file = "Result.txt", row.names = paperList[,3])
 save.image(file = "Citation.Rdata");
-
-# ## Apply SCORE on the giant component ##
-# #the hot nodes that are in the giant component
-# HotNodeGiant = intersect(GiantLabel, newind);  
-# length(HotNodeGiant)
-# #the index of these hot nodes, if we consider the giant component
-# HotGiantInd = which(degree[GiantLabel] >= 50); 
-# length(HotGiantInd)
-# 
-# GiantEig = eig(Giant);
-# plot(GiantEig[1:20])
-# 
-# giantn = dim(Giant)[1]
-# est_score = matrix(0, nrow = 4, ncol = giantn); 
-# for(K in 3:6){  
-#   est_score[K-2,] = SCORE(Giant, K)
-# }
-# est_score_orig = est_score; 
-# 
-# est_score = est_score_orig;
-# est_score_large = est_score[,HotGiantInd]; 
-# recordj = NULL;
-# kk = 3; 
-# tmp = table(est_cascore_large[kk-2,], est_score_large[kk-2, ])
-# tmplabel = est_score[kk - 2,]; 
-# for(ii in 1:min(nrow(tmp), ncol(tmp))){
-#   j = which.max(tmp[ii,]);
-#   est_score[kk - 2, tmplabel == j] = ii; 
-# }
-# 
-# est_score_large = est_score[,HotGiantInd]; 
-# for(kk in 4:6){
-#   est_score_large = est_score[,HotGiantInd]; 
-#   tmp = table(est_score_large[kk-3,], est_score_large[kk-2, ])
-#   tmplabel = est_score[kk - 2,]; 
-#   for(ii in 1:min(nrow(tmp), ncol(tmp))){
-#     j = which.max(tmp[ii,]); print(j); 
-#     est_score[kk - 2, tmplabel == colnames(tmp)[j]] = ii; 
-#     est_score[kk - 2, tmplabel == ii] = colnames(tmp)[j]; 
-#     recordj = c(recordj, j); 
-#     print(table(est_score[kk-3,HotGiantInd] , est_score[kk-2, HotGiantInd]))
-#   }
-# }
-# 
-# par(mfrow = c(2,2), mai = c(0.1, 0.1, 0.2, 0.1))
-# for(kk in 3:6){
-#   plot(graph1, layout = L, vertex.color = est_score[kk - 2, HotGiantInd], vertex.label = NA, 
-#        vertex.size = 5, main = paste("SCORE, K = ", kk))
-# }
-# 
-# bigcomm = which.max(summary(as.factor(est_score[1, ])))
-# tmplabel = est_score[1,]
-# est_score[1, tmplabel == bigcomm] = 1; 
-# est_score[1, tmplabel == 1] = bigcomm;
-# tmpind = which(tmplabel!=1)
-# est_score[1, tmpind] = as.factor(as.numeric(est_score[1, tmpind]) + 2);
-# bigind = which(est_score[1, ] == 1)
-# est_score[1, bigind] = SCORE(Giant[bigind, bigind], 3)
-
-#vshape = c("circle", "square", "triangle", "crectangle", "sphere")
-#vsize = c(5, 5, 2, 2, 5)
-#plot(graph1, layout = L, xlim = c(-1, 2), vertex.color = est_cascore[kk - 2, newind], vertex.label = NA, 
-#     vertex.shape = vshape[est_cascore[kk - 2, newind]], vertex.size = vsize[est_cascore[kk - 2, newind]])
